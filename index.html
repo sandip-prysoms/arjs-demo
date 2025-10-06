@@ -1,16 +1,73 @@
 <!doctype HTML>
 <html>
-<script src="https://aframe.io/releases/0.6.1/aframe.min.js"></script>
-<script src="aframe-ar.js"> </script>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AR Coke Soda</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.js"></script>
+  <style>html,body{margin:0;padding:0;overflow:hidden}</style>
+  <style>
+    .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #fff; padding: 8px 12px; border-radius: 6px; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 9999; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
 <body style='margin : 0px; overflow: hidden;'>
-<a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false;'>
-    <a-marker preset='custom' url='pattern.patt'>
+<div id="toast" class="toast"></div>
+<a-scene embedded renderer="antialias: true; colorManagement: true" vr-mode-ui="enabled: false" arjs='sourceType: webcam; debugUIEnabled: true; patternRatio: 0.5;'>
+    <a-assets timeout="60000">
+        <a-asset-item id="cokeModel" src="cokesoda/source/coke.glb"></a-asset-item>
+    </a-assets>
+    <a-entity light="type: ambient; intensity: 0.7"></a-entity>
+    <a-entity light="type: directional; intensity: 0.6" position="0 1 1"></a-entity>
+    <!-- <a-marker preset='custom' url='pattern.patt'>
         <a-box position='0 0.5 0' material='color: green;opacity: 0.5'></a-box>
+    </a-marker> -->
+    <a-marker id="hiroMarker" preset='hiro'>
+        <a-plane position="0 0 0" rotation="-90 0 0" width="1" height="1" material="color: #4CAF50; opacity: 0.7"></a-plane>
+        <a-entity
+            id="cokeEntity"
+            gltf-model="#cokeModel"
+            position="0 0.5 0"
+            rotation="-90 0 0"
+            scale="2 2 2"
+        ></a-entity>
     </a-marker>
-    <a-marker preset='hiro'>
-        <a-box position='0 0.5 0' material='color: red;opacity: 0.5'></a-box>
-    </a-marker>
-    <a-entity camera></a-entity>
 </a-scene>
+<script>
+  // Basic diagnostics to see if the asset loads and model attaches
+  (function() {
+    const toastEl = document.getElementById('toast');
+    let toastTimer;
+    function showToast(msg, duration=1600) {
+      if (!toastEl) return;
+      toastEl.textContent = msg;
+      toastEl.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastEl.classList.remove('show'), duration);
+    }
+    const asset = document.querySelector('#cokeModel');
+    const entity = document.querySelector('#cokeEntity');
+    const hiro = document.querySelector('#hiroMarker');
+    if (asset) {
+      asset.addEventListener('loaded', () => { console.log('[assets] GLB asset loaded'); showToast('Model asset loaded'); });
+      asset.addEventListener('error', (e) => { console.error('[assets] GLB asset error', e); showToast('Failed to load model asset'); });
+    }
+    if (entity) {
+      entity.addEventListener('model-loaded', (e) => {
+        console.log('[model] model-loaded', e.detail);
+        showToast('Model ready');
+      });
+      entity.addEventListener('model-error', (e) => {
+        console.error('[model] model-error', e.detail || e);
+        showToast('Model failed to render');
+      });
+    }
+    if (hiro) {
+      hiro.addEventListener('markerFound', () => { console.log('[marker] Hiro detected'); showToast('Hiro detected'); });
+      hiro.addEventListener('markerLost', () => { console.log('[marker] Hiro lost'); showToast('Hiro lost'); });
+    }
+  })();
+</script>
 </body>
 </html>
