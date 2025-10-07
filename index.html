@@ -14,6 +14,18 @@
 </head>
 <body style='margin : 0px; overflow: hidden;'>
 <div id="toast" class="toast"></div>
+<div id="controls" style="position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; font-family: monospace; z-index: 1000;">
+  <h4>Live Controls</h4>
+  <label>Position X: <input type="range" id="posX" min="-2" max="2" step="0.1" value="0"></label><br>
+  <label>Position Y: <input type="range" id="posY" min="-2" max="2" step="0.1" value="0"></label><br>
+  <label>Position Z: <input type="range" id="posZ" min="-2" max="2" step="0.1" value="0"></label><br>
+  <label>Rotation X: <input type="range" id="rotX" min="-180" max="180" step="1" value="0"></label><br>
+  <label>Rotation Y: <input type="range" id="rotY" min="-180" max="180" step="1" value="90"></label><br>
+  <label>Rotation Z: <input type="range" id="rotZ" min="-180" max="180" step="1" value="0"></label><br>
+  <label>Scale: <input type="range" id="scale" min="0.1" max="3" step="0.1" value="0.5"></label><br>
+  <label>Animation Speed (dur): <input type="range" id="animDur" min="1000" max="20000" step="500" value="8000"></label><br>
+  <button id="toggleAnim">Toggle Animation</button>
+</div>
 <a-scene embedded renderer="antialias: true; colorManagement: true" vr-mode-ui="enabled: false" arjs='sourceType: webcam; debugUIEnabled: true; patternRatio: 0.5;'>
     <a-assets timeout="60000">
         <a-asset-item id="cokeModel" src="cokesoda/source/coke.glb"></a-asset-item>
@@ -25,16 +37,63 @@
     </a-marker> -->
     <a-marker id="hiroMarker" preset='hiro'>
         <a-plane position="0 0 0" rotation="-90 0 0" width="1" height="1" material="color: #4CAF50; opacity: 0.7"></a-plane>
+        <a-text position="0 1 0" rotation="0 0 0" value="Coke AR Demo" color="#FFFFFF" align="center" width="6" height="2" font="https://cdn.jsdelivr.net/npm/aframe-fonts@0.0.1/fonts/mozillavr.fnt"></a-text>
         <a-entity
             id="cokeEntity"
             gltf-model="#cokeModel"
-            position="0 0.5 0"
-            rotation="-90 0 0"
-            scale="2 2 2"
+            position="0 0 0"
+            rotation="0 90 0"
+            scale="0.5 0.5 0.5"
+            animation="property: rotation; from: 0 0 0; to: 0 0 0; loop: true; dur: 8000; easing: easeInOutSine"
         ></a-entity>
     </a-marker>
 </a-scene>
 <script>
+  // Live controls for position, rotation, scale, and animation
+  const cokeEntity = document.querySelector('#cokeEntity');
+  let animationPaused = false;
+
+  function updateEntity() {
+    const posX = document.getElementById('posX').value;
+    const posY = document.getElementById('posY').value;
+    const posZ = document.getElementById('posZ').value;
+    const rotX = document.getElementById('rotX').value;
+    const rotY = document.getElementById('rotY').value;
+    const rotZ = document.getElementById('rotZ').value;
+    const scale = document.getElementById('scale').value;
+    const animDur = document.getElementById('animDur').value;
+
+    cokeEntity.setAttribute('position', `${posX} ${posY} ${posZ}`);
+    cokeEntity.setAttribute('rotation', `${rotX} ${rotY} ${rotZ}`);
+    cokeEntity.setAttribute('scale', `${scale} ${scale} ${scale}`);
+
+    // Update animation dur
+    cokeEntity.setAttribute('animation', `property: rotation; from: ${rotX} ${rotY} ${rotZ}; to: ${rotX} ${parseFloat(rotY) + 360} ${rotZ}; loop: true; dur: ${animDur}; easing: easeInOutSine`);
+  }
+
+  // Event listeners for inputs
+  document.getElementById('posX').addEventListener('input', updateEntity);
+  document.getElementById('posY').addEventListener('input', updateEntity);
+  document.getElementById('posZ').addEventListener('input', updateEntity);
+  document.getElementById('rotX').addEventListener('input', updateEntity);
+  document.getElementById('rotY').addEventListener('input', updateEntity);
+  document.getElementById('rotZ').addEventListener('input', updateEntity);
+  document.getElementById('scale').addEventListener('input', updateEntity);
+  document.getElementById('animDur').addEventListener('input', updateEntity);
+
+  // Toggle animation
+  document.getElementById('toggleAnim').addEventListener('click', () => {
+    if (animationPaused) {
+      cokeEntity.play();
+      animationPaused = false;
+      document.getElementById('toggleAnim').textContent = 'Pause Animation';
+    } else {
+      cokeEntity.pause();
+      animationPaused = true;
+      document.getElementById('toggleAnim').textContent = 'Play Animation';
+    }
+  });
+
   // Basic diagnostics to see if the asset loads and model attaches
   (function() {
     const toastEl = document.getElementById('toast');
